@@ -3,28 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Nós dois — Finanças</title>
+<title>GP - Gaste&amp;Poupe</title>
 
 <!-- PWA -->
-<meta name="theme-color" content="#007a58">
+<meta name="theme-color" content="#007a58" id="meta-theme-color">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nós dois">
+<meta name="apple-mobile-web-app-title" content="GP - Gaste&amp;Poupe">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="Controle financeiro do casal">
+<meta name="description" content="Controle financeiro pessoal">
 
 <!-- PWA manifest inline via JS (não precisa de servidor) -->
 <script>
 (function(){
-  const icon = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23007a58'/><text x='96' y='130' font-size='100' text-anchor='middle' font-family='system-ui'>💰</text></svg>`);
+  const accent = localStorage.getItem('app-accent-color') || '#007a58';
+  const iconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='${accent}'/><text x='96' y='120' font-size='72' font-weight='800' text-anchor='middle' font-family='system-ui' fill='white'>GP</text></svg>`;
+  const icon = "data:image/svg+xml," + encodeURIComponent(iconSvg);
   const manifest = {
-    name: "Nós dois — Finanças",
-    short_name: "Nós dois",
-    description: "Controle financeiro do casal",
+    name: "GP - Gaste&Poupe",
+    short_name: "GP",
+    description: "Controle financeiro pessoal",
     start_url: ".",
     display: "standalone",
     background_color: "#f7f7f5",
-    theme_color: "#007a58",
+    theme_color: accent,
     orientation: "portrait",
     icons: [
       { src: icon, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
@@ -36,11 +38,18 @@
   const link = document.createElement('link');
   link.rel = 'manifest'; link.href = url;
   document.head.appendChild(link);
+  document.getElementById('meta-theme-color')?.setAttribute('content', accent);
+  const appleIcon = document.getElementById('apple-touch-icon');
+  if(appleIcon){
+    const appleSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='${accent}'/><text x='90' y='113' font-size='68' font-weight='800' text-anchor='middle' font-family='system-ui' fill='white'>GP</text></svg>`;
+    appleIcon.href = "data:image/svg+xml," + encodeURIComponent(appleSvg);
+  }
 })();
 </script>
 
-<!-- Apple touch icon inline -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23007a58'/%3E%3Ctext x='90' y='125' font-size='95' text-anchor='middle' font-family='system-ui'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
+<!-- Apple touch icon inline (atualizado por JS acima com a cor escolhida) -->
+<link rel="apple-touch-icon" id="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23007a58'/%3E%3Ctext x='90' y='113' font-size='68' font-weight='800' text-anchor='middle' font-family='system-ui' fill='white'%3EGP%3C/text%3E%3C/svg%3E">
+
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,7 +127,7 @@
 
   /* ── TOPBAR ─────────────────────────────────────────────────────────── */
   .topbar{background:var(--surface);border-bottom:none;box-shadow:var(--shadow);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:var(--top-h);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-  .topbar-logo{font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--teal),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.3px;}
+  .topbar-logo{font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--teal),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;}
   .topbar-month{display:flex;align-items:center;gap:4px;background:var(--surface2);border-radius:99px;padding:4px 6px 4px 12px;}
   .topbar-month button{background:var(--bg);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:12px;transition:all .15s;}
   .topbar-month button:active{background:var(--teal-light);color:var(--teal);}
@@ -216,6 +225,10 @@
   .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .cat-btn{padding:11px 4px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;color:var(--text2);}
   .cat-btn.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark);}
+  .color-swatch{width:36px;height:36px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;padding:0;position:relative;transition:transform .15s;}
+  .color-swatch:active{transform:scale(.92);}
+  .color-swatch.selected{border-color:var(--text);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text);}
+  .color-swatch.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.3);}
   .btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.2px;box-shadow:0 4px 14px rgba(0,196,140,.3);transition:opacity .15s,transform .1s;}
   .btn-primary:active{opacity:.9;transform:scale(.99);}
   .btn-sm{padding:9px 16px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,196,140,.25);}
@@ -467,7 +480,7 @@
 <body>
 
 <div class="topbar">
-  <span class="topbar-logo">💰 Nós dois</span>
+  <span class="topbar-logo">GP · Gaste&amp;Poupe</span>
   <div style="display:flex;align-items:center;gap:8px;">
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
     <div class="topbar-month">
@@ -790,6 +803,16 @@
   <div class="card" style="cursor:pointer;" onclick="showPage('metas')">
     <div class="card-title" style="margin-bottom:4px;">🎯 Renda e limites por categoria</div>
     <div style="font-size:12px;color:var(--text3);">Defina sua renda mensal e quanto pode gastar em cada categoria →</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:10px;">🎨 Aparência</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Escolha a cor principal do app (botões, destaques e ícone).</div>
+    <div id="color-swatches" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="color" id="accent-color-picker" value="#00c48c" onchange="onAccentColorInput()" oninput="onAccentColorInput()" style="width:44px;height:36px;border:none;border-radius:8px;padding:0;background:none;cursor:pointer;">
+      <span style="font-size:12px;color:var(--text3);">ou escolha uma cor personalizada</span>
+    </div>
   </div>
 
   <div class="card" style="margin-top:12px;">
@@ -2891,6 +2914,7 @@ function renderConfig(){
   renderFavoritos();
   loadNotifPrefs();
   loadFirebaseConfig();
+  buildColorSwatches();
 }
 function exportData(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
@@ -2996,7 +3020,7 @@ self.addEventListener('fetch',e=>{
   );
 });
 
-self.addEventListener('push',e=>{const d=e.data?e.data.json():{};self.registration.showNotification(d.title||'Nós dois',{body:d.body||'',icon:d.icon||'',badge:d.icon||''});});
+self.addEventListener('push',e=>{const d=e.data?e.data.json():{};self.registration.showNotification(d.title||'GP - Gaste&Poupe',{body:d.body||'',icon:d.icon||'',badge:d.icon||''});});
 `;
   const blob=new Blob([swCode],{type:'application/javascript'});
   const swUrl=URL.createObjectURL(blob);
@@ -3191,7 +3215,7 @@ function agendarResumoSemanal(){
     const{totalSemana,pix,cartao,topCats}=gerarResumoSemanal();
     const topStr=topCats.slice(0,2).map(([c,v])=>{const cat=getAllCats().find(x=>x.id===c);return`${cat?cat.label:c}: ${fmtBRL(v)}`;}).join(', ');
     sendNotification(
-      '📊 Resumo semanal — Nós dois',
+      '📊 Resumo semanal — GP',
       `Semana: ${fmtBRL(totalSemana)} (Pix: ${fmtBRL(pix)} / Cartão: ${fmtBRL(cartao)})${topStr?'\n'+topStr:''}`,
       'resumo-semanal'
     );
@@ -3636,6 +3660,63 @@ function updateThemeBtn(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark'||
     (document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
   btn.textContent=isDark?'☀️':'🌙';
+}
+
+// ─── COR DO APP (ACCENT COLOR) ──────────────────────────────────────────────
+const ACCENT_PRESETS=['#00c48c','#3d8ef0','#7c6ef5','#e0507a','#e08a00','#e2574c','#17a2b8','#2ea043'];
+function hexToRgb(hex){
+  hex=hex.replace('#','');
+  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const num=parseInt(hex,16);
+  return{r:(num>>16)&255,g:(num>>8)&255,b:num&255};
+}
+function rgbToHex(r,g,b){
+  return'#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');
+}
+// desloca uma cor em direção a branco (percent>0) ou preto (percent<0)
+function shadeColor(hex,percent){
+  const{r,g,b}=hexToRgb(hex);
+  const target=percent<0?0:255;
+  const p=Math.abs(percent)/100;
+  return rgbToHex(r+(target-r)*p,g+(target-g)*p,b+(target-b)*p);
+}
+function applyAccentColor(hex,persist=true){
+  if(!/^#[0-9a-f]{6}$/i.test(hex))return;
+  const root=document.documentElement.style;
+  root.setProperty('--teal',hex);
+  root.setProperty('--teal-dark',shadeColor(hex,-22));
+  root.setProperty('--teal-light',shadeColor(hex,86));
+  document.getElementById('meta-theme-color')?.setAttribute('content',hex);
+  if(persist){
+    localStorage.setItem('app-accent-color',hex);
+    // Atualiza também o ícone do PWA para refletir a nova cor na próxima instalação
+    const appleIcon=document.getElementById('apple-touch-icon');
+    if(appleIcon){
+      const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='${hex}'/><text x='90' y='113' font-size='68' font-weight='800' text-anchor='middle' font-family='system-ui' fill='white'>GP</text></svg>`;
+      appleIcon.href="data:image/svg+xml,"+encodeURIComponent(svg);
+    }
+  }
+  const picker=document.getElementById('accent-color-picker');
+  if(picker)picker.value=hex;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('selected',s.dataset.color.toLowerCase()===hex.toLowerCase()));
+}
+function pickPresetColor(hex){applyAccentColor(hex);toast('Cor aplicada!');}
+function onAccentColorInput(){
+  const val=document.getElementById('accent-color-picker').value;
+  applyAccentColor(val);
+}
+function buildColorSwatches(){
+  const wrap=document.getElementById('color-swatches');
+  if(!wrap)return;
+  const saved=localStorage.getItem('app-accent-color')||'#00c48c';
+  wrap.innerHTML=ACCENT_PRESETS.map(hex=>
+    `<button class="color-swatch${hex.toLowerCase()===saved.toLowerCase()?' selected':''}" data-color="${hex}" style="background:${hex}" onclick="pickPresetColor('${hex}')" title="${hex}"></button>`
+  ).join('');
+}
+function initAccentColor(){
+  const saved=localStorage.getItem('app-accent-color');
+  if(saved)applyAccentColor(saved,false);
+  buildColorSwatches();
 }
 
 // ─── TAGS ──────────────────────────────────────────────────────────────────
@@ -4188,6 +4269,7 @@ function autoLancarFixos(){
 // ─── INIT ──────────────────────────────────────────────────────────────────
 runMigrations();
 initTheme();
+initAccentColor();
 buildCatGrid();
 buildPeriodoOptions();
 buildCartaoSelects();
