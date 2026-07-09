@@ -947,8 +947,33 @@
       <button class="btn-outline" style="flex:1;" onclick="document.getElementById('import-input').click()">📥 Importar JSON</button>
     </div>
     <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn-primary" style="width:100%;margin-top:10px;" onclick="document.getElementById('import-sheet-input').click()">📊 Importar planilha (CSV) de gastos</button>
+    <input type="file" id="import-sheet-input" accept=".csv" style="display:none" onchange="handleSheetFile(event)">
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;">Colunas aceitas: data, valor, descrição, categoria, pagamento, fixo. Cabeçalhos em qualquer ordem — você confirma o mapeamento antes de importar.</div>
     <button class="btn-outline" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);" onclick="if(confirm('Apagar todos os dados?'))clearData()">🗑️ Limpar todos os dados</button>
     <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="exibirResultadoTestes()">🧪 Rodar testes de validação</button>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR PLANILHA -->
+<div id="modal-import-sheet" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeImportSheet()">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">Importar planilha <button class="modal-close" onclick="closeImportSheet()">✕</button></div>
+    <div id="import-sheet-step1">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Confirme qual coluna do arquivo corresponde a cada campo.</div>
+      <div id="import-col-mapping"></div>
+      <button class="btn-primary" style="margin-top:10px;" onclick="buildImportPreview()">Avançar → ver prévia</button>
+    </div>
+    <div id="import-sheet-step2" style="display:none;">
+      <div id="import-summary" style="font-size:13px;margin-bottom:10px;"></div>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;">
+        <table style="width:100%;font-size:12px;border-collapse:collapse;" id="import-preview-table"></table>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-outline" style="flex:1;" onclick="backToImportMapping()">← Voltar</button>
+        <button class="btn-primary" style="flex:1;" onclick="confirmImportSheet()">Importar tudo</button>
+      </div>
+    </div>
   </div>
 </div>
 <!-- RECEITAS -->
@@ -2938,6 +2963,172 @@ function importData(e){
     }catch{toast('Arquivo inválido');}
   };
   reader.readAsText(file);
+}
+
+// ─── IMPORTAR PLANILHA (CSV) ────────────────────────────────────────────────
+let importSheetRows=[]; // linhas cruas do CSV (array de arrays)
+let importSheetHeaders=[];
+
+// Parser simples de CSV que respeita campos entre aspas (vírgula/quebra de linha dentro do texto)
+function parseCSV(text){
+  const rows=[];let row=[];let field='';let inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){
+        if(text[i+1]==='"'){field+='"';i++;}else inQuotes=false;
+      }else field+=c;
+    }else{
+      if(c==='"')inQuotes=true;
+      else if(c===','){row.push(field);field='';}
+      else if(c==='\n'||c==='\r'){
+        if(c==='\r'&&text[i+1]==='\n')i++;
+        row.push(field);field='';
+        if(row.length>1||row[0]!=='')rows.push(row);
+        row=[];
+      }else field+=c;
+    }
+  }
+  if(field!==''||row.length){row.push(field);rows.push(row);}
+  return rows;
+}
+
+function handleSheetFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const parsed=parseCSV(ev.target.result);
+    if(parsed.length<2){toast('Arquivo vazio ou inválido');return;}
+    importSheetHeaders=parsed[0].map(h=>h.trim());
+    importSheetRows=parsed.slice(1).filter(r=>r.some(v=>v&&v.trim()!==''));
+    buildImportColMapping();
+    document.getElementById('import-sheet-step1').style.display='block';
+    document.getElementById('import-sheet-step2').style.display='none';
+    document.getElementById('modal-import-sheet').style.display='flex';
+  };
+  reader.readAsText(file,'utf-8');
+  e.target.value='';
+}
+
+const IMPORT_FIELDS=[
+  {key:'data',label:'Data',required:true,guesses:['data','date']},
+  {key:'valor',label:'Valor',required:true,guesses:['valor','amount','value']},
+  {key:'descricao',label:'Descrição',required:true,guesses:['descricao','descrição','desc']},
+  {key:'categoria',label:'Categoria',required:false,guesses:['categoria','category','cat']},
+  {key:'pagamento',label:'Forma de pagamento',required:false,guesses:['pagamento','payment']},
+  {key:'isFixo',label:'É gasto fixo?',required:false,guesses:['isfixo','fixo']}
+];
+
+function guessColumnIndex(guesses){
+  for(let i=0;i<importSheetHeaders.length;i++){
+    const h=importSheetHeaders[i].toLowerCase().trim();
+    if(guesses.includes(h))return i;
+  }
+  return -1;
+}
+
+function buildImportColMapping(){
+  const wrap=document.getElementById('import-col-mapping');
+  wrap.innerHTML=IMPORT_FIELDS.map(f=>{
+    const guessIdx=guessColumnIndex(f.guesses);
+    const options=`<option value="">— ignorar —</option>`+importSheetHeaders.map((h,i)=>
+      `<option value="${i}"${i===guessIdx?' selected':''}>${h}</option>`).join('');
+    return`<div class="form-group" style="margin-bottom:8px;">
+      <label style="font-size:12px;">${f.label}${f.required?' *':''}</label>
+      <select id="import-map-${f.key}" style="font-size:13px;">${options}</select>
+    </div>`;
+  }).join('');
+}
+
+function resolveImportCategory(text){
+  if(!text)return{cat:'outros',extra:''};
+  const t=text.trim().toLowerCase();
+  const cats=getAllCats();
+  // match direto por id
+  let found=cats.find(c=>c.id.toLowerCase()===t);
+  if(found)return{cat:found.id,extra:''};
+  // match por label (ignorando emoji)
+  found=cats.find(c=>c.label.toLowerCase().includes(t)||t.includes(c.label.split(' ').slice(1).join(' ').toLowerCase()));
+  if(found)return{cat:found.id,extra:''};
+  return{cat:'outros',extra:text.trim()};
+}
+
+function resolveImportPayment(text){
+  const t=(text||'').trim().toLowerCase();
+  if(t==='cartao'||t==='cartão'||t==='credit')return'cartao';
+  if(t==='dinheiro'||t==='cash')return'dinheiro';
+  return'pix';
+}
+
+function buildImportPreview(){
+  const map={};
+  IMPORT_FIELDS.forEach(f=>{
+    const val=document.getElementById('import-map-'+f.key).value;
+    map[f.key]=val===''?null:parseInt(val);
+  });
+  if(map.data===null||map.valor===null||map.descricao===null){
+    toast('Selecione ao menos Data, Valor e Descrição');return;
+  }
+  const parsedRows=importSheetRows.map(r=>{
+    let data=(r[map.data]||'').trim();
+    if(/^\d{4}-\d{2}$/.test(data))data+='-01';
+    const valorRaw=(r[map.valor]||'').replace('R$','').trim();
+    const valor=parseFloat(valorRaw.includes(',')&&!valorRaw.includes('.')?valorRaw.replace(',','.'):valorRaw.replace(/,/g,''));
+    const descricao=(r[map.descricao]||'').trim();
+    const catText=map.categoria!==null?(r[map.categoria]||'').trim():'';
+    const{cat,extra}=resolveImportCategory(catText);
+    const pagamento=map.pagamento!==null?resolveImportPayment(r[map.pagamento]):'pix';
+    const isFixo=map.isFixo!==null?['true','1','sim','verdadeiro'].includes((r[map.isFixo]||'').trim().toLowerCase()):false;
+    return{data,valor,descricao:extra&&!descricao.includes(extra)?descricao:descricao,cat,pagamento,isFixo,valido:!!data&&!isNaN(valor)&&!!descricao};
+  });
+  window._importParsedRows=parsedRows;
+  const validos=parsedRows.filter(r=>r.valido);
+  const total=validos.reduce((s,r)=>s+r.valor,0);
+  document.getElementById('import-summary').innerHTML=
+    `<strong>${validos.length}</strong> lançamentos prontos para importar (de ${parsedRows.length} linhas) · Total: <strong>${fmtBRL(total)}</strong>`+
+    (validos.length<parsedRows.length?`<div style="color:var(--red);font-size:11px;margin-top:4px;">${parsedRows.length-validos.length} linha(s) ignorada(s) por falta de data/valor/descrição válidos.</div>`:'');
+  const rowsHtml=validos.slice(0,50).map(r=>{
+    const c=getCat(r.cat);
+    return`<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:5px 6px;white-space:nowrap;">${r.data.split('-').reverse().join('/')}</td>
+      <td style="padding:5px 6px;">${r.descricao}</td>
+      <td style="padding:5px 6px;white-space:nowrap;">${c.label}</td>
+      <td style="padding:5px 6px;text-align:right;white-space:nowrap;">${fmtBRL(r.valor)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('import-preview-table').innerHTML=
+    `<thead><tr style="text-align:left;color:var(--text3);font-size:11px;"><th style="padding:5px 6px;">Data</th><th style="padding:5px 6px;">Descrição</th><th style="padding:5px 6px;">Categoria</th><th style="padding:5px 6px;text-align:right;">Valor</th></tr></thead><tbody>${rowsHtml}</tbody>`+
+    (validos.length>50?`<tfoot><tr><td colspan="4" style="padding:6px;text-align:center;color:var(--text3);font-size:11px;">+ ${validos.length-50} outras linhas não exibidas (mas serão importadas)</td></tr></tfoot>`:'');
+  document.getElementById('import-sheet-step1').style.display='none';
+  document.getElementById('import-sheet-step2').style.display='block';
+}
+
+function backToImportMapping(){
+  document.getElementById('import-sheet-step1').style.display='block';
+  document.getElementById('import-sheet-step2').style.display='none';
+}
+
+function confirmImportSheet(){
+  const validos=(window._importParsedRows||[]).filter(r=>r.valido);
+  if(!validos.length){toast('Nada para importar');return;}
+  validos.forEach((r,i)=>{
+    state.transactions.push({
+      id:'imp-'+Date.now()+'-'+i,
+      amount:r.valor,desc:r.descricao,person:'ambos',
+      payment:r.pagamento,cat:r.cat,date:r.data,isFixo:r.isFixo
+    });
+  });
+  save();
+  closeImportSheet();
+  renderDashboard();
+  const active=document.querySelector('.page.active')?.id;
+  if(active==='page-history')renderHistory();
+  toast(`✓ ${validos.length} lançamentos importados!`);
+}
+
+function closeImportSheet(){
+  document.getElementById('modal-import-sheet').style.display='none';
+  importSheetRows=[];importSheetHeaders=[];window._importParsedRows=[];
 }
 function clearData(){
   state.transactions=[];state.metas=[];state.reservas=[];state.recorrentes=[];
