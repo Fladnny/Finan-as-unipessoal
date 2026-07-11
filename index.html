@@ -242,12 +242,6 @@
   .autocomplete-item:last-child{border-bottom:none;}
   .autocomplete-item:active{background:var(--teal-light);}
 
-  /* ── FOTO ───────────────────────────────────────────────────────────── */
-  .foto-area{border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--surface2);margin-bottom:14px;transition:all .2s;}
-  .foto-area:active,.foto-area.drag{border-color:var(--teal);background:var(--teal-light);}
-  .foto-area p{font-size:13px;color:var(--text3);margin-top:8px;font-weight:500;}
-  .foto-preview{width:100%;max-height:180px;object-fit:contain;border-radius:var(--radius-sm);margin-bottom:12px;display:none;}
-
   /* ── PARCELADO ──────────────────────────────────────────────────────── */
   .parcela-card{background:var(--purple-light);border-left:3px solid var(--purple);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;}
   .parcela-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
@@ -295,18 +289,6 @@
   .stat-row:last-child{border-bottom:none;}
   .stat-label{color:var(--text2);font-weight:500;}
   .stat-value{font-weight:700;}
-
-  /* ── AI ─────────────────────────────────────────────────────────────── */
-  .ai-messages{margin-bottom:14px;display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto;}
-  .ai-msg{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;max-width:88%;}
-  .ai-msg.assistant{background:var(--teal-light);color:var(--teal-dark);align-self:flex-start;border-bottom-left-radius:4px;}
-  .ai-msg.user{background:var(--blue-light);color:var(--blue);align-self:flex-end;border-bottom-right-radius:4px;}
-  .ai-msg.loading{background:var(--surface2);color:var(--text3);font-style:italic;align-self:flex-start;}
-  .ai-input-row{display:flex;gap:8px;}
-  .ai-input-row input{flex:1;}
-  .quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
-  .quick-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:99px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;}
-  .quick-btn:active{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);}
 
   /* ── METAS ──────────────────────────────────────────────────────────── */
   .meta-list{display:flex;flex-direction:column;gap:10px;}
@@ -373,7 +355,7 @@
   .fatura-futura-val{font-weight:800;color:var(--blue);}
   .fatura-alerta{background:var(--red-light);color:var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;margin-top:10px;font-weight:600;}
 
-  /* ── IA PROATIVA ────────────────────────────────────────────────────── */
+  /* ── INSIGHTS E ALERTAS (lógica local, sem IA) ─────────────────────────── */
   .ia-insight{border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:10px;font-size:13px;line-height:1.55;border-left:3px solid;font-weight:500;}
   .ia-insight.warn{background:var(--amber-light);border-color:var(--amber);color:var(--amber);}
   .ia-insight.danger{background:var(--red-light);border-color:var(--red);color:var(--red);}
@@ -515,7 +497,7 @@
   <!-- CARD ORÇAMENTO DIÁRIO -->
   <div id="budget-card-wrap"></div>
 
-  <!-- IA PROATIVA -->
+  <!-- INSIGHTS E ALERTAS -->
   <div id="ia-insights-wrap"></div>
 
   <div class="summary-grid">
@@ -572,18 +554,6 @@
 <!-- ADD -->
 <div id="page-add" class="page">
   <div class="card">
-    <!-- FOTO -->
-    <div class="section-title">📷 Lançar por foto de nota fiscal</div>
-    <div class="foto-area" onclick="document.getElementById('file-input').click()" id="foto-area">
-      <div style="font-size:28px;">🧾</div>
-      <p>Toque para tirar foto ou escolher da galeria</p>
-    </div>
-    <img id="foto-preview" class="foto-preview">
-    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handleFoto(event)">
-    <button class="btn-outline" id="btn-analisar" style="display:none;width:100%;margin-bottom:14px;" onclick="analisarFoto()">🤖 Analisar com IA</button>
-    <div id="foto-loading" style="display:none;text-align:center;color:var(--text3);font-size:13px;padding:8px;">Analisando nota fiscal...</div>
-    <hr style="border:none;border-top:.5px solid var(--border);margin-bottom:16px;">
-
     <div class="form-group">
       <label>Valor (R$)</label>
       <input type="number" id="f-valor" class="valor-input" placeholder="0,00" inputmode="decimal" step="0.01" min="0">
@@ -777,25 +747,6 @@
   <div id="reservas-list" class="meta-list" style="margin-top:12px;"></div>
 </div>
 
-<!-- IA -->
-<div id="page-ia" class="page">
-  <div class="card">
-    <div class="card-title" style="margin-bottom:8px;">Assistente financeiro</div>
-    <div class="ai-messages" id="ai-messages">
-      <div class="ai-msg assistant">Olá! Posso analisar seus gastos, identificar excessos, comparar Pix vs Cartão e muito mais. Como posso ajudar?</div>
-    </div>
-    <div class="ai-input-row">
-      <input type="text" id="ai-input" placeholder="Pergunte sobre seus gastos..." onkeydown="if(event.key==='Enter')sendAI()">
-      <button class="btn-sm" onclick="sendAI()">Enviar</button>
-    </div>
-  </div>
-  <div class="quick-btns">
-    <button class="quick-btn" onclick="quickAsk('Onde estamos gastando mais este mês?')">Maiores gastos</button>
-    <button class="quick-btn" onclick="quickAsk('Como está o uso do cartão de crédito comparado ao Pix?')">Pix vs Cartão</button>
-    <button class="quick-btn" onclick="quickAsk('Quais categorias posso cortar?')">Onde cortar?</button>
-    <button class="quick-btn" onclick="quickAsk('Compare meus gastos dos últimos meses.')">Evolução</button>
-  </div>
-</div>
 
 <!-- CONFIG -->
 <div id="page-config" class="page">
@@ -1177,7 +1128,6 @@ let selReceitaPerson='p1', selReceitaCat='salario';
 let selRecCartao='na'; // cartão selecionado no form de gasto fixo
 let editingId=null,editPay='pix';
 let evolChart=null,diasChart=null,saldoChart=null;
-let fotoBase64=null,fotoMime=null;
 
 function save(){
   localStorage.setItem('fc-state3',JSON.stringify(state));
@@ -2101,44 +2051,6 @@ function updateParcelaPreview(){
 }
 
 // ─── FOTO ──────────────────────────────────────────────────────────────────
-function handleFoto(e){
-  const file=e.target.files[0];if(!file)return;
-  fotoMime=file.type;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    fotoBase64=ev.target.result.split(',')[1];
-    const preview=document.getElementById('foto-preview');
-    preview.src=ev.target.result;preview.style.display='block';
-    document.getElementById('btn-analisar').style.display='block';
-  };
-  reader.readAsDataURL(file);
-}
-
-async function analisarFoto(){
-  if(!fotoBase64)return;
-  document.getElementById('foto-loading').style.display='block';
-  document.getElementById('btn-analisar').style.display='none';
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:fotoMime,data:fotoBase64}},
-          {type:'text',text:'Analise esta nota fiscal ou comprovante de pagamento. Responda APENAS em JSON válido sem markdown, com os campos: {"valor": número, "descricao": "string curta", "categoria": "mercado|restaurante|transporte|saude|educacao|lazer|casa|roupas|outros"}'}
-        ]}]
-      })
-    });
-    const data=await res.json();
-    const text=data.content?.[0]?.text||'';
-    const json=JSON.parse(text.replace(/```json|```/g,'').trim());
-    if(json.valor)document.getElementById('f-valor').value=json.valor;
-    if(json.descricao)document.getElementById('f-desc').value=json.descricao;
-    if(json.categoria)selectCat(json.categoria);
-    toast('✅ Nota analisada! Confira os dados.');
-  }catch(err){toast('Não foi possível ler a nota. Preencha manualmente.');}
-  document.getElementById('foto-loading').style.display='none';
-}
-
 // ─── CARTÕES (CRUD) ─────────────────────────────────────────────────────────
 function buildPeriodoOptions(){
   const sel=document.getElementById('filter-periodo');
@@ -2454,9 +2366,6 @@ function addTransaction(){
   document.getElementById('parcela-section').style.display='none';
   document.getElementById('fatura-section').style.display='none';
   currentTags=[];renderTagsInForm();
-  fotoBase64=null;fotoMime=null;
-  document.getElementById('foto-preview').style.display='none';
-  document.getElementById('btn-analisar').style.display='none';
   showPage('dashboard',document.getElementById('bnav-dashboard'));
 }
 
@@ -3135,36 +3044,6 @@ function clearData(){
   state.cartoes=[];state.receitas=[];state.receitasFixas=[];state.rendaPorMes={};
   save();renderDashboard();toast('Dados apagados');
 }
-
-// ─── IA ────────────────────────────────────────────────────────────────────
-function buildFinancialContext(){
-  const allTxs=state.transactions;if(!allTxs.length)return'Ainda não há gastos registrados.';
-  const byMonth={};allTxs.forEach(t=>{const m=t.date.slice(0,7);if(!byMonth[m])byMonth[m]=[];byMonth[m].push(t);});
-  const rendaMesAtual=getRendaMes(state.currentMonth);
-  let ctx=`Renda fixa de ${faturaLabel(state.currentMonth)}: ${rendaMesAtual?fmtBRL(rendaMesAtual):'não informada'}\n\n`;
-  Object.entries(byMonth).sort().slice(-4).forEach(([m,txs])=>{
-    const total=txs.reduce((s,t)=>s+t.amount,0);
-    const pix=txs.filter(t=>t.payment==='pix').reduce((s,t)=>s+t.amount,0);
-    const cartao=txs.filter(t=>t.payment==='cartao').reduce((s,t)=>s+t.amount,0);
-    ctx+=`Mês ${m}: total ${fmtBRL(total)}, pix ${fmtBRL(pix)}, cartão ${fmtBRL(cartao)}\n`;
-    const cats={};txs.forEach(t=>{cats[t.cat]=(cats[t.cat]||0)+t.amount;});
-    Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{ctx+=`  ${c}: ${fmtBRL(v)}\n`;});ctx+='\n';
-  });
-  if(state.metas.length)ctx+='Metas: '+state.metas.map(m=>`${m.cat}=${fmtBRL(m.value)}`).join(', ')+'\n';
-  if(state.recorrentes.length)ctx+='Fixos: '+state.recorrentes.map(r=>`${r.nome}=${fmtBRL(r.valor)}`).join(', ')+'\n';
-  return ctx;
-}
-async function sendAI(){
-  const input=document.getElementById('ai-input');const q=input.value.trim();if(!q)return;
-  input.value='';addMsg('user',q);addMsg('loading','Analisando...');
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:`Assistente financeiro pessoal (brasileiro). Responda em português, direto e prático. Foco em reduzir cartão e controlar gastos do dia a dia.\n\n${buildFinancialContext()}`,messages:[{role:'user',content:q}]})});
-    const data=await res.json();removeLoading();addMsg('assistant',data.content?.[0]?.text||'Não consegui processar.');
-  }catch(e){removeLoading();addMsg('assistant','Erro de conexão.');}
-}
-function quickAsk(q){document.getElementById('ai-input').value=q;sendAI();}
-function addMsg(type,text){const el=document.getElementById('ai-messages');const div=document.createElement('div');div.className='ai-msg '+type;if(type==='loading')div.dataset.loading='true';div.textContent=text;el.appendChild(div);el.scrollTop=el.scrollHeight;}
-function removeLoading(){document.querySelectorAll('[data-loading]').forEach(e=>e.remove());}
 
 // ─── SERVICE WORKER (PWA offline) ──────────────────────────────────────────
 function registerSW(){
@@ -4046,7 +3925,7 @@ function saveInlineEdit(id){
   toast('✓ Atualizado!');
 }
 
-// ─── IA PROATIVA ───────────────────────────────────────────────────────────
+// ─── INSIGHTS E ALERTAS (lógica local, sem IA) ─────────────────────────────
 async function gerarInsightsProativos(){
   const wrap=document.getElementById('ia-insights-wrap');
   if(!wrap)return;
@@ -4128,11 +4007,10 @@ async function gerarInsightsProativos(){
 
   if(!insights.length){wrap.innerHTML='';return;}
 
-  // mostra no máx 3, com botão "ver análise completa com IA"
+  // mostra no máx 3
   wrap.innerHTML=`<div style="margin-bottom:12px;">`
     +insights.slice(0,3).map(i=>`<div class="ia-insight ${i.type}">💡 ${i.text}</div>`).join('')
-    +`<button onclick="quickAsk('Analise meus gastos deste mês e dê sugestões detalhadas.');showPage(\"ia\",document.getElementById(\"bnav-ia\"))" style="width:100%;padding:9px;background:none;border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);cursor:pointer;margin-top:4px;">Ver análise completa com IA →</button>
-  </div>`;
+  +`</div>`;
 }
 
 // ─── FATURA FUTURA ACUMULADA ────────────────────────────────────────────────
